@@ -112,7 +112,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import api from "@/plugins/api";
-import { store } from "@/plugins/store";
+import { store, addShortcut } from "@/plugins/store";
 import { ContextMenuDialogEvent, eventbus } from "@/plugins/eventbus";
 
 const show = ref<boolean>(false);
@@ -495,6 +495,25 @@ export const getContextMenuItems = async function (
       },
       icon: "mdi-information-outline",
     });
+
+    // Add to shortcuts option
+    if (itemIsAvailable(firstItem)) {
+      const isInShortcuts = store.shortcuts.some(s => s.id === `${firstItem.media_type}-${firstItem.item_id}`);
+      contextMenuItems.push({
+        label: isInShortcuts ? "remove_shortcut" : "add_shortcut",
+        labelArgs: [],
+        action: () => {
+          if (isInShortcuts) {
+            const shortcutId = `${firstItem.media_type}-${firstItem.item_id}`;
+            store.shortcuts = store.shortcuts.filter(s => s.id !== shortcutId);
+            localStorage.setItem('shortcuts', JSON.stringify(store.shortcuts));
+          } else {
+            addShortcut(firstItem as MediaItem);
+          }
+        },
+        icon: isInShortcuts ? "mdi-bookmark-remove" : "mdi-bookmark-plus",
+      });
+    }
   }
 
   // browse folder
